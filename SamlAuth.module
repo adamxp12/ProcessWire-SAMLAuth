@@ -1,4 +1,5 @@
 <?php
+namespace ProcessWire;
 /**
  * SamlAuth (1.2)
  * Add SAML authentication to any ProcessWire website
@@ -29,8 +30,8 @@ class SamlAuth extends Process implements Module, ConfigurableModule {
   }
 
   public function init() {
-    $this->session->addHookBefore('ProcessLogin::renderLoginForm', $this, 'login');
-    $this->session->addHookBefore('Session::logout', $this, 'logout');
+    $this->session->addHookBefore('ProcessLogin::renderLoginForm', $this, 'loginsaml');
+    $this->session->addHookBefore('Session::logout', $this, 'logoutsaml');
 
 
     // Make acs.php, metadata.php and sls.php public accessible 
@@ -59,7 +60,7 @@ class SamlAuth extends Process implements Module, ConfigurableModule {
   }
 
   // Login event (hooks into renderLoginForm to process on login page )
-  public function login($event) {
+  public function loginsaml($event) {
     require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'_toolkit_loader.php');
     $auth = new OneLogin_Saml2_Auth();
 
@@ -93,7 +94,7 @@ class SamlAuth extends Process implements Module, ConfigurableModule {
   }
 
   // Log user out from processwire and SSO
-  public function logout($event) {
+  public function logoutsaml($event) {
     session_start();
     $this->error($this->EntityID);
 
