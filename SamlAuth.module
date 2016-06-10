@@ -1,0 +1,106 @@
+<?php
+/**
+ * SAML Auth (1.0.0)
+ * Add SSO through SAML with this handy ProcessWire module
+ * 
+ * @author Adam Blunt
+ * 
+ * ProcessWire 2.x
+ * Copyright (C) 2011 by Ryan Cramer
+ * Licensed under GNU/GPL v2, see LICENSE.TXT
+ * 
+ * http://www.processwire.com
+ * http://www.ryancramer.com
+ * 
+ */
+
+class SamlAuth extends Process implements Module, ConfigurableModule {
+
+  public static function getModuleInfo() {
+    return array(
+      'title' => "SAML Auth",
+      'version' => "1.2",
+      'summary' => "Add SAML authentication to any ProcessWire website",
+      'author' => "Adam Blunt",
+      'href' => "http://adamblunt.me/samlpw",  
+      'autoload' => true,
+      'singular' => true           
+      );
+  }
+
+  public function init() {
+    $this->session->addHookBefore('ProcessLogin::renderLoginForm', $this, 'login');
+    $this->session->addHookBefore('Session::logout', $this, 'logout');
+
+
+    // Make acs.php, metadata.php and sls.php public accessible 
+    if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/acs.php')) {
+
+      $this->addHookBefore("ProcessPageView::pageNotFound",function($event) {
+        $event->replace = true;
+        require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'endpoints'.DIRECTORY_SEPARATOR.'acs.php');
+      });
+
+    } elseif (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/metadata.php')) {
+
+        $this->addHookBefore("ProcessPageView::pageNotFound",function($event) {
+          $event->replace = true;
+          require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'endpoints'.DIRECTORY_SEPARATOR.'metadata.php');
+        });
+          
+    } elseif (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/sls.php')) {
+
+        $this->addHookBefore("ProcessPageView::pageNotFound",function($event) {
+          $event->replace = true;
+          require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'endpoints'.DIRECTORY_SEPARATOR.'sls.php');
+        });
+
+      }
+  }
+
+  // Login event (hooks into renderLoginForm to process on login page )
+  public function login($event) {
+    require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'_toolkit_loader.php');
+    $auth = new OneLogin_Saml2_Auth();
+
+    if (!isset($_SESSION['samlUserdata'])) { // User not logged in to SAML
+      $auth->login();   // Initiate Login through SAML
+    } else {
+      // We are in (almost)
+      $attributes = $_SESSION['samlUserdata'];
+      $mail = $attributes['mail'][0];
+
+      if(!empty($mail)) { // If we got an email from the SSO service then check if that email is in the ProcessWire Database
+        $user = wire('users')->get("email$=".$mail); // If we find a user in ProcessWire with a matching email then log in
+        $username = $user->name;
+        if(!empty($username)) {
+          $user->setOutputFormatting(false);
+          $temppass=sha1(uniqid() . $username . uniqid()); //Generate a VERY secure password, the user does not need this anymore
+          $user->pass = $temppass; // Set that secure password
+          wire('users')->save($user); // Save new user details
+          wire('session')->login($username, $temppass); //Log user in with new password
+          wire('session')->redirect($config->urls->admin+"\page\\",false); //Redirect to admin area now that we are loggged in
+          // Strange bug in WebKit browsers here, if I remove the \page\ addition it will stop at a blank page, FireFox does not exhibit this.
+
+        } else { // User not in ProcessWire so disallow
+          $this->error("Your user is not allowed to admin this site sorry");
+        }
+
+      } else { // No email in SSO response
+        $this->error("Your user does not have an email on file, can not match to site user without email");
+      }
+    }
+  }
+
+  // Log user out from processwire and SSO
+  public function logout($event) {
+    session_start();
+    $this->error($this->EntityID);
+
+    require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'_toolkit_loader.php');
+
+    $auth = new OneLogin_Saml2_Auth();
+    $auth->logout(wire('pages')->get(1)->httpUrl);
+  }
+
+}
