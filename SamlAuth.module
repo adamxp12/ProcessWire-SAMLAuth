@@ -1,7 +1,7 @@
 <?php
 /**
- * SAML Auth (1.0.0)
- * Add SSO through SAML with this handy ProcessWire module
+ * SamlAuth (1.2)
+ * Add SAML authentication to any ProcessWire website
  * 
  * @author Adam Blunt
  * 
@@ -22,7 +22,7 @@ class SamlAuth extends Process implements Module, ConfigurableModule {
       'version' => "1.2",
       'summary' => "Add SAML authentication to any ProcessWire website",
       'author' => "Adam Blunt",
-      'href' => "http://adamblunt.me/samlpw",  
+      'href' => "http://adamblunt.me/",  
       'autoload' => true,
       'singular' => true           
       );
