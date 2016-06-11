@@ -15,7 +15,7 @@ namespace ProcessWire;
  * 
  */
 
-class SamlAuth extends Process implements Module, ConfigurableModule {
+class SamlAuth extends WireData implements Module, ConfigurableModule {
 
   public static function getModuleInfo() {
     return array(
