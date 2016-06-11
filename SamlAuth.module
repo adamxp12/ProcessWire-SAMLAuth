@@ -1,5 +1,4 @@
 <?php
-namespace ProcessWire;
 /**
  * SamlAuth (1.2)
  * Add SAML authentication to any ProcessWire website
