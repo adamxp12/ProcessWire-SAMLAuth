@@ -24,18 +24,18 @@ This is bassed on the awesome OneLogin php saml toolkit and should be pretty sim
 This module will act as a SP, and as such you will need to add it to your IDP metadata.
 This module adds the following URL's which you will need to do this
 
-__http://(ProcessWireSite)/acs.php__ for the Assertion Consumer Service
+__http://(ProcessWireSite)/saml/acs.php__ for the Assertion Consumer Service
 
-__http://(ProcessWireSite)/metadata.php__ for the SP's metadata
+__http://(ProcessWireSite)/saml/metadata.php__ for the SP's metadata
 
-__http://(ProcessWireSite)/sls.php__ for the Single Logout Service
+__http://(ProcessWireSite)/saml/sls.php__ for the Single Logout Service
  
 
 Below is an example for people who use SimpleSAMLphp (this would go in saml20-sp-remote.php)
 ```php
-  $metadata['http://192.168.0.62/pwtheme/metadata.php'] = array(
-    'AssertionConsumerService' => 'http://192.168.0.62/pwtheme/acs.php',
-    'SingleLogoutService' => 'http://192.168.0.62/pwtheme/sls.php',
+  $metadata['http://192.168.0.62/pwtheme/saml/metadata.php'] = array(
+    'AssertionConsumerService' => 'http://192.168.0.62/pwtheme/saml/acs.php',
+    'SingleLogoutService' => 'http://192.168.0.62/pwtheme/saml/sls.php',
   );
 ```
 That ProcessWire site is installed in the pwtheme subdirectory on my test server just for context.
