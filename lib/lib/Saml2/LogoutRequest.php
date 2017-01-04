@@ -127,10 +127,10 @@ LOGOUTREQUEST;
      */
     public static function getID($request)
     {
-        if ($request instanceof DOMDocument) {
+        if ($request instanceof \DOMDocument) {
             $dom = $request;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = OneLogin_Saml2_Utils::loadXML($dom, $request);
         }
 
@@ -150,10 +150,10 @@ LOGOUTREQUEST;
      */
     public static function getNameIdData($request, $key = null)
     {
-        if ($request instanceof DOMDocument) {
+        if ($request instanceof \DOMDocument) {
             $dom = $request;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = OneLogin_Saml2_Utils::loadXML($dom, $request);
         }
 
@@ -217,10 +217,10 @@ LOGOUTREQUEST;
      */
     public static function getIssuer($request)
     {
-        if ($request instanceof DOMDocument) {
+        if ($request instanceof \DOMDocument) {
             $dom = $request;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = OneLogin_Saml2_Utils::loadXML($dom, $request);
         }
 
@@ -244,10 +244,10 @@ LOGOUTREQUEST;
      */
     public static function getSessionIndexes($request)
     {
-        if ($request instanceof DOMDocument) {
+        if ($request instanceof \DOMDocument) {
             $dom = $request;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = OneLogin_Saml2_Utils::loadXML($dom, $request);
         }
 
@@ -268,7 +268,7 @@ LOGOUTREQUEST;
     {
         $this->_error = null;
         try {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = OneLogin_Saml2_Utils::loadXML($dom, $this->_logoutRequest);
 
             $idpData = $this->_settings->getIdPData();
@@ -279,7 +279,7 @@ LOGOUTREQUEST;
 
                 if ($security['wantXMLValidation']) {
                     $res = OneLogin_Saml2_Utils::validateXML($dom, 'saml-schema-protocol-2.0.xsd', $this->_settings->isDebugActive());
-                    if (!$res instanceof DOMDocument) {
+                    if (!$res instanceof \DOMDocument) {
                         throw new Exception("Invalid SAML Logout Request. Not match the saml-schema-protocol-2.0.xsd");
                     }
                 }
