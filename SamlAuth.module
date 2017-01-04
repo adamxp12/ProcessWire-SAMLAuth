@@ -1,6 +1,7 @@
 <?php
+namespace ProcessWire;
 /**
- * SamlAuth (1.2)
+ * SamlAuth (1.2.1)
  * Add SAML authentication to any ProcessWire website
  * 
  * @author Adam Blunt
@@ -14,12 +15,12 @@
  * 
  */
 
-class SamlAuth extends WireData implements Module, ConfigurableModule {
+class SamlAuth extends WireData implements Module {
 
   public static function getModuleInfo() {
     return array(
       'title' => "SAML Auth",
-      'version' => "1.2",
+      'version' => "1.2.1",
       'summary' => "Add SAML authentication to any ProcessWire website",
       'author' => "Adam Blunt",
       'href' => "http://adamblunt.me/",  
