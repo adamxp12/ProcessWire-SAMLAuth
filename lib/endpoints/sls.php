@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
  
 /**
  *  SP Single Logout Service Endpoint

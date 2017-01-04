@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
 
 /**
  * SAML 2 Logout Response
@@ -49,7 +49,7 @@ class OneLogin_Saml2_LogoutResponse
             } else {
                 $this->_logoutResponse = $decoded;
             }
-            $this->document = new DOMDocument();
+            $this->document = new \DOMDocument();
             $this->document = OneLogin_Saml2_Utils::loadXML($this->document, $this->_logoutResponse);
         }
     }

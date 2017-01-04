@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
  
 /**
  * Utils of OneLogin PHP Toolkit
@@ -47,11 +47,11 @@ class OneLogin_Saml2_Utils
      */
     public static function loadXML($dom, $xml)
     {
-        assert('$dom instanceof DOMDocument');
+        assert('$dom instanceof \DOMDocument');
         assert('is_string($xml)');
 
         if (strpos($xml, '<!ENTITY') !== false) {
-            throw new Exception('Detected use of ENTITY in XML, disabled to prevent XXE/XEE attacks');
+            throw new \Exception('Detected use of ENTITY in XML, disabled to prevent XXE/XEE attacks');
         }
 
         $oldEntityLoader = libxml_disable_entity_loader(true);
@@ -78,16 +78,16 @@ class OneLogin_Saml2_Utils
      */
     public static function validateXML($xml, $schema, $debug = false)
     {
-        assert('is_string($xml) || $xml instanceof DOMDocument');
+        assert('is_string($xml) || $xml instanceof \DOMDocument');
         assert('is_string($schema)');
 
         libxml_clear_errors();
         libxml_use_internal_errors(true);
 
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             $dom = $xml;
         } else {
-            $dom = new DOMDocument;
+            $dom = new \DOMDocument;
             $dom = self::loadXML($dom, $xml);
             if (!$dom) {
                 return 'unloaded_xml';
@@ -513,7 +513,7 @@ class OneLogin_Saml2_Utils
         /* Parse the duration. We use a very strict pattern. */
         $durationRegEx = '#^(-?)P(?:(?:(?:(\\d+)Y)?(?:(\\d+)M)?(?:(\\d+)D)?(?:T(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?)?)|(?:(\\d+)W))$#D';
         if (!preg_match($durationRegEx, $duration, $matches)) {
-            throw new Exception('Invalid ISO 8601 duration: ' . $duration);
+            throw new \Exception('Invalid ISO 8601 duration: ' . $duration);
         }
 
         $durYears = (empty($matches[2]) ? 0 : (int)$matches[2]);
@@ -622,7 +622,7 @@ class OneLogin_Saml2_Utils
      */
     public static function query($dom, $query, $context = null)
     {
-        $xpath = new DOMXPath($dom);
+        $xpath = new \DOMXPath($dom);
         $xpath->registerNamespace('samlp', OneLogin_Saml2_Constants::NS_SAMLP);
         $xpath->registerNamespace('saml', OneLogin_Saml2_Constants::NS_SAML);
         $xpath->registerNamespace('ds', OneLogin_Saml2_Constants::NS_DS);
@@ -738,7 +738,7 @@ class OneLogin_Saml2_Utils
     public static function generateNameId($value, $spnq, $format, $cert = null)
     {
 
-        $doc = new DOMDocument();
+        $doc = new \DOMDocument();
 
         $nameId = $doc->createElement('saml:NameID');
         if (isset($spnq)) {
@@ -763,7 +763,7 @@ class OneLogin_Saml2_Utils
 
             $encryptedData = $enc->encryptNode($symmetricKey);
 
-            $newdoc = new DOMDocument();
+            $newdoc = new \DOMDocument();
 
             $encryptedID = $newdoc->createElement('saml:EncryptedID');
 
@@ -793,12 +793,12 @@ class OneLogin_Saml2_Utils
 
         $statusEntry = self::query($dom, '/samlp:Response/samlp:Status');
         if ($statusEntry->length == 0) {
-            throw new Exception('Missing Status on response');
+            throw new \Exception('Missing Status on response');
         }
 
         $codeEntry = self::query($dom, '/samlp:Response/samlp:Status/samlp:StatusCode', $statusEntry->item(0));
         if ($codeEntry->length == 0) {
-            throw new Exception('Missing Status Code on response');
+            throw new \Exception('Missing Status Code on response');
         }
         $code = $codeEntry->item(0)->getAttribute('Value');
         $status['code'] = $code;
@@ -839,12 +839,12 @@ class OneLogin_Saml2_Utils
 
         $symmetricKey = $enc->locateKey($encryptedData);
         if (!$symmetricKey) {
-            throw new Exception('Could not locate key algorithm in encrypted data.');
+            throw new \Exception('Could not locate key algorithm in encrypted data.');
         }
 
         $symmetricKeyInfo = $enc->locateKeyInfo($symmetricKey);
         if (!$symmetricKeyInfo) {
-            throw new Exception('Could not locate <dsig:KeyInfo> for the encrypted key.');
+            throw new \Exception('Could not locate <dsig:KeyInfo> for the encrypted key.');
         }
 
         $inputKeyAlgo = $inputKey->getAlgorithm();
@@ -856,7 +856,7 @@ class OneLogin_Saml2_Utils
             }
 
             if ($inputKeyAlgo !== $symKeyInfoAlgo) {
-                throw new Exception(
+                throw new \Exception(
                     'Algorithm mismatch between input key and key used to encrypt ' .
                     ' the symmetric key for the message. Key was: ' .
                     var_export($inputKeyAlgo, true) . '; message was: ' .
@@ -869,7 +869,7 @@ class OneLogin_Saml2_Utils
             $keySize = $symmetricKey->getSymmetricKeySize();
             if ($keySize === null) {
                 // To protect against "key oracle" attacks
-                throw new Exception('Unknown key size for encryption algorithm: ' . var_export($symmetricKey->type, true));
+                throw new \Exception('Unknown key size for encryption algorithm: ' . var_export($symmetricKey->type, true));
             }
 
             $key = $encKey->decryptKey($symmetricKeyInfo);
@@ -890,7 +890,7 @@ class OneLogin_Saml2_Utils
         } else {
             $symKeyAlgo = $symmetricKey->getAlgorithm();
             if ($inputKeyAlgo !== $symKeyAlgo) {
-                throw new Exception(
+                throw new \Exception(
                     'Algorithm mismatch between input key and key in message. ' .
                     'Key was: ' . var_export($inputKeyAlgo, true) . '; message was: ' .
                     var_export($symKeyAlgo, true)
@@ -902,17 +902,17 @@ class OneLogin_Saml2_Utils
         $decrypted = $enc->decryptNode($symmetricKey, false);
 
         $xml = '<root xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'.$decrypted.'</root>';
-        $newDoc = new DOMDocument();
+        $newDoc = new \DOMDocument();
         $newDoc->preserveWhiteSpace = false;
         $newDoc->formatOutput = true;
         $newDoc = self::loadXML($newDoc, $xml);
         if (!$newDoc) {
-            throw new Exception('Failed to parse decrypted XML.');
+            throw new \Exception('Failed to parse decrypted XML.');
         }
  
         $decryptedElement = $newDoc->firstChild->firstChild;
         if ($decryptedElement === null) {
-            throw new Exception('Missing encrypted element.');
+            throw new \Exception('Missing encrypted element.');
         }
 
         return $decryptedElement;
@@ -939,10 +939,10 @@ class OneLogin_Saml2_Utils
         }
         $keyInfo = openssl_pkey_get_details($key->key);
         if ($keyInfo === false) {
-            throw new Exception('Unable to get key details from XMLSecurityKey.');
+            throw new \Exception('Unable to get key details from XMLSecurityKey.');
         }
         if (!isset($keyInfo['key'])) {
-            throw new Exception('Missing key in public key details.');
+            throw new \Exception('Missing key in public key details.');
         }
         $newKey = new XMLSecurityKey($algorithm, array('type'=>$type));
         $newKey->loadKey($keyInfo['key']);
@@ -963,13 +963,13 @@ class OneLogin_Saml2_Utils
      */
     public static function addSign($xml, $key, $cert, $signAlgorithm = XMLSecurityKey::RSA_SHA1)
     {
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             $dom = $xml;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = self::loadXML($dom, $xml);
             if (!$dom) {
-                throw new Exception('Error parsing xml string');
+                throw new \Exception('Error parsing xml string');
             }
         }
 
@@ -1028,12 +1028,12 @@ class OneLogin_Saml2_Utils
      */
     public static function validateSign($xml, $cert = null, $fingerprint = null, $fingerprintalg = 'sha1')
     {
-        if ($xml instanceof DOMDocument) {
+        if ($xml instanceof \DOMDocument) {
             $dom = clone $xml;
-        } else if ($xml instanceof DOMElement) {
+        } else if ($xml instanceof \DOMElement) {
             $dom = clone $xml->ownerDocument;
         } else {
-            $dom = new DOMDocument();
+            $dom = new \DOMDocument();
             $dom = self::loadXML($dom, $xml);
         }
 
@@ -1042,19 +1042,19 @@ class OneLogin_Saml2_Utils
 
         $objDSig = $objXMLSecDSig->locateSignature($dom);
         if (!$objDSig) {
-            throw new Exception('Cannot locate Signature Node');
+            throw new \Exception('Cannot locate Signature Node');
         }
 
         $objKey = $objXMLSecDSig->locateKey();
         if (!$objKey) {
-            throw new Exception('We have no idea about the key');
+            throw new \Exception('We have no idea about the key');
         }
 
         $objXMLSecDSig->canonicalizeSignedInfo();
 
         try {
             $retVal = $objXMLSecDSig->validateReference();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw $e;
         }
 

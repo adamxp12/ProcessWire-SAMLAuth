@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
  
 /**
  * Metadata lib of OneLogin PHP Toolkit

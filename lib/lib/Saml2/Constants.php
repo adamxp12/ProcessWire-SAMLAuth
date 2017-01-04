@@ -1,4 +1,4 @@
-<?php
+<?php namespace ProcessWire;
  
 /**
  * Constants of OneLogin PHP Toolkit

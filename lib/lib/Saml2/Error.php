@@ -1,11 +1,11 @@
-<?php
+<?php namespace ProcessWire;
  
 /**
  * Error class of OneLogin PHP Toolkit
  *
  * Defines the Error class
  */
-class OneLogin_Saml2_Error extends Exception
+class OneLogin_Saml2_Error extends \Exception
 {
     // Errors
     const SETTINGS_FILE_NOT_FOUND = 0;
