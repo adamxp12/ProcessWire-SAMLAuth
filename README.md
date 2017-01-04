@@ -39,3 +39,5 @@ Below is an example for people who use SimpleSAMLphp (this would go in saml20-sp
   );
 ```
 That ProcessWire site is installed in the pwtheme subdirectory on my test server just for context.
+
+* NOTE: as of 1.2.1 this module no longer works in 2.x version of ProcessWire, time to embrace the namespace future, if you really need 2.x support download the version from here https://github.com/adamxp12/ProcessWire-SAMLAuth/releases/tag/1.2
