@@ -1,5 +1,5 @@
-<?php namespace ProcessWire;
- 
+<?php
+
 /**
  * Metadata lib of OneLogin PHP Toolkit
  *
@@ -21,6 +21,7 @@ class OneLogin_Saml2_Metadata
      * @param array         $contacts      Contacts info
      * @param array         $organization  Organization ingo
      * @param array         $attributes
+     *
      * @return string SAML Metadata XML
      */
     public static function builder($sp, $authnsign = false, $wsign = false, $validUntil = null, $cacheDuration = null, $contacts = array(), $organization = array(), $attributes = array())
@@ -38,9 +39,10 @@ class OneLogin_Saml2_Metadata
         $sls = '';
 
         if (isset($sp['singleLogoutService'])) {
+            $slsUrl = htmlspecialchars($sp['singleLogoutService']['url'], ENT_QUOTES);
             $sls = <<<SLS_TEMPLATE
         <md:SingleLogoutService Binding="{$sp['singleLogoutService']['binding']}"
-                                Location="{$sp['singleLogoutService']['url']}" />
+                                Location="{$slsUrl}" />
 
 SLS_TEMPLATE;
         }
@@ -58,6 +60,7 @@ SLS_TEMPLATE;
         }
 
         $strOrganization = '';
+
         if (!empty($organization)) {
             $organizationInfoNames = array();
             $organizationInfoDisplaynames = array();
@@ -96,17 +99,72 @@ CONTACT;
             $strContacts = "\n".implode("\n", $contactsInfo);
         }
 
+        $strAttributeConsumingService = '';
+        if (isset($sp['attributeConsumingService'])) {
+            $attrCsDesc = '';
+            if (isset($sp['attributeConsumingService']['serviceDescription'])) {
+                $attrCsDesc = sprintf(
+                    '            <md:ServiceDescription xml:lang="en">%s</md:ServiceDescription>' . PHP_EOL,
+                    $sp['attributeConsumingService']['serviceDescription']
+                );
+            }
+            if (!isset($sp['attributeConsumingService']['serviceName'])) {
+                $sp['attributeConsumingService']['serviceName'] = 'Service';
+            }
+            $requestedAttributeData = array();
+            foreach ($sp['attributeConsumingService']['requestedAttributes'] as $attribute) {
+                $requestedAttributeStr = sprintf('            <md:RequestedAttribute Name="%s"', $attribute['name']);
+                if (isset($attribute['nameFormat'])) {
+                    $requestedAttributeStr .= sprintf(' NameFormat="%s"', $attribute['nameFormat']);
+                }
+                if (isset($attribute['friendlyName'])) {
+                    $requestedAttributeStr .= sprintf(' FriendlyName="%s"', $attribute['friendlyName']);
+                }
+                if (isset($attribute['isRequired'])) {
+                    $requestedAttributeStr .= sprintf(' isRequired="%s"', $attribute['isRequired'] === true ? 'true' : 'false');
+                }
+                $reqAttrAuxStr = " />";
+
+                if (isset($attribute['attributeValue']) && !empty($attribute['attributeValue'])) {
+                    $reqAttrAuxStr = '>';
+                    if (is_string($attribute['attributeValue'])) {
+                        $attribute['attributeValue'] = array($attribute['attributeValue']);
+                    }
+                    foreach ($attribute['attributeValue'] as $attrValue) {
+                        $reqAttrAuxStr .=<<<ATTRIBUTEVALUE
+
+                <saml:AttributeValue xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion">{$attrValue}</saml:AttributeValue>
+ATTRIBUTEVALUE;
+                    }
+                    $reqAttrAuxStr .= "\n            </md:RequestedAttribute>";
+                }
+
+                $requestedAttributeData[] = $requestedAttributeStr . $reqAttrAuxStr;
+            }
+
+            $requestedAttributeStr = implode(PHP_EOL, $requestedAttributeData);
+            $strAttributeConsumingService = <<<METADATA_TEMPLATE
+<md:AttributeConsumingService index="1">
+            <md:ServiceName xml:lang="en">{$sp['attributeConsumingService']['serviceName']}</md:ServiceName>
+{$attrCsDesc}{$requestedAttributeStr}
+        </md:AttributeConsumingService>
+METADATA_TEMPLATE;
+        }
+
+        $spEntityId = htmlspecialchars($sp['entityId'], ENT_QUOTES);
+        $acsUrl = htmlspecialchars($sp['assertionConsumerService']['url'], ENT_QUOTES);
         $metadata = <<<METADATA_TEMPLATE
 <?xml version="1.0"?>
 <md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata"
                      validUntil="{$validUntilTime}"
                      cacheDuration="PT{$cacheDuration}S"
-                     entityID="{$sp['entityId']}">
+                     entityID="{$spEntityId}">
     <md:SPSSODescriptor AuthnRequestsSigned="{$strAuthnsign}" WantAssertionsSigned="{$strWsign}" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
 {$sls}        <md:NameIDFormat>{$sp['NameIDFormat']}</md:NameIDFormat>
         <md:AssertionConsumerService Binding="{$sp['assertionConsumerService']['binding']}"
-                                     Location="{$sp['assertionConsumerService']['url']}"
+                                     Location="{$acsUrl}"
                                      index="1" />
+        {$strAttributeConsumingService}
     </md:SPSSODescriptor>{$strOrganization}{$strContacts}
 </md:EntityDescriptor>
 METADATA_TEMPLATE;
@@ -117,25 +175,31 @@ METADATA_TEMPLATE;
      * Signs the metadata with the key/cert provided
      *
      * @param string $metadata SAML Metadata XML
-     * @param string $key      x509 key
-     * @param string $cert     x509 cert
+     * @param string $key x509 key
+     * @param string $cert x509 cert
+     * @param string $signAlgorithm Signature algorithm method
+     * @param string $digestAlgorithm Digest algorithm method
      *
      * @return string Signed Metadata
+     *
+     * @throws Exception
      */
-    public static function signMetadata($metadata, $key, $cert, $signAlgorithm = XMLSecurityKey::RSA_SHA1)
+    public static function signMetadata($metadata, $key, $cert, $signAlgorithm = XMLSecurityKey::RSA_SHA1, $digestAlgorithm = XMLSecurityDSig::SHA1)
     {
-        return OneLogin_Saml2_Utils::addSign($metadata, $key, $cert, $signAlgorithm);
+        return OneLogin_Saml2_Utils::addSign($metadata, $key, $cert, $signAlgorithm, $digestAlgorithm);
     }
 
     /**
      * Adds the x509 descriptors (sign/encriptation) to the metadata
      * The same cert will be used for sign/encrypt
      *
-     * @param string $metadata       SAML Metadata XML
-     * @param string $cert           x509 cert
-     * @param bool   $wantsEncrypted Whether to include the KeyDescriptor for encryption
+     * @param string $metadata SAML Metadata XML
+     * @param string $cert x509 cert
+     * @param bool $wantsEncrypted Whether to include the KeyDescriptor for encryption
      *
      * @return string Metadata with KeyDescriptors
+     *
+     * @throws Exception
      */
     public static function addX509KeyDescriptors($metadata, $cert, $wantsEncrypted = true)
     {
@@ -159,7 +223,7 @@ METADATA_TEMPLATE;
 
         $keyInfo = $xml->createElementNS(OneLogin_Saml2_Constants::NS_DS, 'ds:KeyInfo');
         $keyInfo->appendChild($keyData);
-        
+
         $keyDescriptor = $xml->createElementNS(OneLogin_Saml2_Constants::NS_MD, "md:KeyDescriptor");
 
         $SPSSODescriptor = $xml->getElementsByTagName('SPSSODescriptor')->item(0);

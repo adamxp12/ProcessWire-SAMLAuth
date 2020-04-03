@@ -1,7 +1,7 @@
 <?php
 namespace ProcessWire;
 /**
- * SamlAuth (1.2.1)
+ * SamlAuth (1.3.0)
  * Add SAML authentication to any ProcessWire website
  * 
  * @author Adam Blunt
@@ -31,7 +31,7 @@ class SamlAuth extends WireData implements Module {
 
   public function init() {
     $this->session->addHookBefore('ProcessLogin::renderLoginForm', $this, 'loginsaml');
-    $this->session->addHookBefore('Session::logout', $this, 'logoutsaml');
+    $this->session->addHookAfter('Session::logout', $this, 'logoutsaml');
 
 
     // Make acs.php, metadata.php and sls.php public accessible 
@@ -62,7 +62,7 @@ class SamlAuth extends WireData implements Module {
   // Login event (hooks into renderLoginForm to process on login page )
   public function loginsaml($event) {
     require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'_toolkit_loader.php');
-    $auth = new OneLogin_Saml2_Auth();
+    $auth = new \OneLogin_Saml2_Auth();
 
     if (!isset($_SESSION['samlUserdata'])) { // User not logged in to SAML
       $auth->login();   // Initiate Login through SAML
@@ -75,12 +75,12 @@ class SamlAuth extends WireData implements Module {
         $user = wire('users')->get("email$=".$mail); // If we find a user in ProcessWire with a matching email then log in
         $username = $user->name;
         if(!empty($username)) {
-          $user->setOutputFormatting(false);
-          $temppass=sha1(uniqid() . $username . uniqid()); //Generate a VERY secure password, the user does not need this anymore
-          $user->pass = $temppass; // Set that secure password
-          wire('users')->save($user); // Save new user details
-          wire('session')->login($username, $temppass); //Log user in with new password
-          wire('session')->redirect($config->urls->admin+"\page\\",false); //Redirect to admin area now that we are loggged in
+          // $user->setOutputFormatting(false);
+          // $temppass=sha1(uniqid() . $username . uniqid()); //Generate a VERY secure password, the user does not need this anymore
+          // $user->pass = $temppass; // Set that secure password
+          // wire('users')->save($user); // Save new user details
+          wire('session')->forceLogin($username); //Log user in with new password
+          wire('session')->redirect(wire('config')->urls->admin . "page/",false); //Redirect to admin area now that we are loggged in
           // Strange bug in WebKit browsers here, if I remove the \page\ addition it will stop at a blank page, FireFox does not exhibit this.
 
         } else { // User not in ProcessWire so disallow
@@ -97,11 +97,10 @@ class SamlAuth extends WireData implements Module {
   public function logoutsaml($event) {
     session_start();
     $this->error($this->EntityID);
-
     require_once(wire('config')->paths->SAMLauth.'lib'.DIRECTORY_SEPARATOR.'_toolkit_loader.php');
 
-    $auth = new OneLogin_Saml2_Auth();
-    $auth->logout(wire('pages')->get(1)->httpUrl);
+    $auth = new \OneLogin_Saml2_Auth();
+    $auth->logout("https:\\lap.server.adamxp12.com\pw");
   }
 
 }

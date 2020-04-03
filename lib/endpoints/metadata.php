@@ -7,7 +7,7 @@
 require_once dirname(dirname(__FILE__)).'/_toolkit_loader.php';
 
 try {
-    $auth = new OneLogin_Saml2_Auth();
+    $auth = new \OneLogin_Saml2_Auth();
     $settings = $auth->getSettings();
     $metadata = $settings->getSPMetadata();
     $errors = $settings->validateMetadata($metadata);
@@ -15,7 +15,8 @@ try {
         header('Content-Type: text/xml');
         echo $metadata;
     } else {
-        throw new OneLogin_Saml2_Error(
+        echo implode(' ', $errors);
+        throw new \OneLogin_Saml2_Error(
             'Invalid SP metadata: '.implode(', ', $errors),
             OneLogin_Saml2_Error::METADATA_SP_INVALID
         );
