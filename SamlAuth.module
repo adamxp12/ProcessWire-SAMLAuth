@@ -20,7 +20,7 @@ class SamlAuth extends WireData implements Module {
   public static function getModuleInfo() {
     return array(
       'title' => "SAML Auth",
-      'version' => "1.2.1",
+      'version' => "1.3",
       'summary' => "Add SAML authentication to any ProcessWire website",
       'author' => "Adam Blunt",
       'href' => "http://adamblunt.me/",  
